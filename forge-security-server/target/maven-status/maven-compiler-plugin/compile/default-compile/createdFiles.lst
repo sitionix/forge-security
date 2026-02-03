@@ -1,0 +1,17 @@
+com/sitionix/forge/security/server/config/ForgeSecurityServerProperties$DevJwt.class
+com/sitionix/forge/security/server/core/DevJwtServiceIdentityVerifier.class
+com/sitionix/forge/security/server/web/ForgeInternalAuthFilter.class
+META-INF/spring-configuration-metadata.json
+com/sitionix/forge/security/server/config/ForgeSecurityDevJwtConverter.class
+com/sitionix/forge/security/server/config/ForgeSecurityMode.class
+com/sitionix/forge/security/server/web/ServiceIdentityAuthenticationToken.class
+com/sitionix/forge/security/server/core/PolicyEnforcer.class
+com/sitionix/forge/security/server/core/ServiceIdentityVerifier.class
+com/sitionix/forge/security/server/config/ForgeSecurityServerProperties.class
+com/sitionix/forge/security/server/config/ForgeSecurityServerValidator.class
+com/sitionix/forge/security/server/web/ForgeSecurityRequestHelper.class
+com/sitionix/forge/security/server/core/MtlsServiceIdentityVerifier.class
+com/sitionix/forge/security/server/config/ForgeSecurityServerProperties$Server.class
+com/sitionix/forge/security/server/config/ForgeSecurityServerAutoConfiguration.class
+com/sitionix/forge/security/server/config/ForgeSecurityServerProperties$Policy.class
+com/sitionix/forge/security/server/core/ServiceIdentity.class

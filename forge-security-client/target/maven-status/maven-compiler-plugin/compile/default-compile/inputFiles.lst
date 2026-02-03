@@ -1,0 +1,12 @@
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/config/ForgeSecurityClientAutoConfiguration.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/config/ForgeSecurityClientProperties.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/config/ForgeSecurityClientValidator.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/config/ForgeSecurityDevJwtConverter.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/config/ForgeSecurityMode.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/core/ForgeServiceAuthHeaderProvider.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/core/ServiceJwtIssuer.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/core/TargetAudienceResolver.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/web/DefaultTargetAudienceResolver.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/web/ForgeServiceAuthClientHttpRequestInterceptor.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/web/ForgeServiceAuthRestTemplateCustomizer.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-client/src/main/java/com/sitionix/forge/security/client/web/ForgeServiceAuthRestTemplatePostProcessor.java

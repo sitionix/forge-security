@@ -1,0 +1,101 @@
+{
+  "groups": [
+    {
+      "name": "forge.security",
+      "type": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
+    },
+    {
+      "name": "forge.security.dev",
+      "type": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties",
+      "sourceMethod": "getDev()"
+    },
+    {
+      "name": "forge.security.server",
+      "type": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$Server",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties",
+      "sourceMethod": "getServer()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "forge.security.dev.accepted-audiences",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
+    },
+    {
+      "name": "forge.security.dev.issuer",
+      "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": "sitionix-internal"
+    },
+    {
+      "name": "forge.security.dev.it-bypass-policies",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": true
+    },
+    {
+      "name": "forge.security.dev.it-ignore-expiry",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": true
+    },
+    {
+      "name": "forge.security.dev.it-kid",
+      "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": "it"
+    },
+    {
+      "name": "forge.security.dev.it-kid-bypass-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": false
+    },
+    {
+      "name": "forge.security.dev.jwt-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
+    },
+    {
+      "name": "forge.security.dev.static-token",
+      "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
+    },
+    {
+      "name": "forge.security.dev.ttl-seconds",
+      "type": "java.lang.Long",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
+      "defaultValue": 300
+    },
+    {
+      "name": "forge.security.mode",
+      "type": "com.sitionix.forge.security.server.config.ForgeSecurityMode",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
+    },
+    {
+      "name": "forge.security.policies",
+      "type": "java.util.Map<java.lang.String,com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$Policy>",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
+    },
+    {
+      "name": "forge.security.server.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$Server",
+      "defaultValue": true
+    },
+    {
+      "name": "forge.security.server.excludes",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$Server"
+    },
+    {
+      "name": "forge.security.service-name",
+      "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
+    }
+  ],
+  "hints": []
+}
