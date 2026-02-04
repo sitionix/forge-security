@@ -20,9 +20,9 @@
   ],
   "properties": [
     {
-      "name": "forge.security.dev.accepted-audiences",
+      "name": "forge.security.accepted-audiences",
       "type": "java.util.List<java.lang.String>",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
     },
     {
       "name": "forge.security.dev.issuer",
@@ -31,36 +31,7 @@
       "defaultValue": "sitionix-internal"
     },
     {
-      "name": "forge.security.dev.it-bypass-policies",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
-      "defaultValue": true
-    },
-    {
-      "name": "forge.security.dev.it-ignore-expiry",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
-      "defaultValue": true
-    },
-    {
-      "name": "forge.security.dev.it-kid",
-      "type": "java.lang.String",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
-      "defaultValue": "it"
-    },
-    {
-      "name": "forge.security.dev.it-kid-bypass-enabled",
-      "type": "java.lang.Boolean",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt",
-      "defaultValue": false
-    },
-    {
       "name": "forge.security.dev.jwt-secret",
-      "type": "java.lang.String",
-      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
-    },
-    {
-      "name": "forge.security.dev.static-token",
       "type": "java.lang.String",
       "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$DevJwt"
     },
@@ -92,8 +63,13 @@
       "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$Server"
     },
     {
-      "name": "forge.security.service-name",
+      "name": "forge.security.service-id",
       "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
+    },
+    {
+      "name": "forge.security.services",
+      "type": "java.util.Map<java.lang.String,com.sitionix.forge.security.server.config.ForgeSecurityServerProperties$ServiceDefinition>",
       "sourceType": "com.sitionix.forge.security.server.config.ForgeSecurityServerProperties"
     }
   ],

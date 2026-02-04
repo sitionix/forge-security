@@ -2,16 +2,23 @@ package com.sitionix.forge.security.client.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @ConfigurationProperties(prefix = "forge.security")
 public class ForgeSecurityClientProperties {
 
     private ForgeSecurityMode mode = ForgeSecurityMode.MTLS;
 
-    private String serviceName;
+    private String serviceId;
 
     private DevJwt dev = new DevJwt();
 
     private final Client client = new Client();
+
+    private Map<String, ServiceDefinition> services = new HashMap<>();
 
     public ForgeSecurityMode getMode() {
         return this.mode;
@@ -21,12 +28,12 @@ public class ForgeSecurityClientProperties {
         this.mode = mode;
     }
 
-    public String getServiceName() {
-        return this.serviceName;
+    public String getServiceId() {
+        return this.serviceId;
     }
 
-    public void setServiceName(final String serviceName) {
-        this.serviceName = serviceName;
+    public void setServiceId(final String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public DevJwt getDev() {
@@ -42,6 +49,14 @@ public class ForgeSecurityClientProperties {
 
     public Client getClient() {
         return this.client;
+    }
+
+    public Map<String, ServiceDefinition> getServices() {
+        return this.services;
+    }
+
+    public void setServices(final Map<String, ServiceDefinition> services) {
+        this.services = services;
     }
 
     public static class DevJwt {
@@ -97,6 +112,29 @@ public class ForgeSecurityClientProperties {
 
         public void setEnabled(final boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    public static class ServiceDefinition {
+
+        private String id;
+
+        private List<String> hosts = new ArrayList<>();
+
+        public String getId() {
+            return this.id;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public List<String> getHosts() {
+            return this.hosts;
+        }
+
+        public void setHosts(final List<String> hosts) {
+            this.hosts = hosts;
         }
     }
 }

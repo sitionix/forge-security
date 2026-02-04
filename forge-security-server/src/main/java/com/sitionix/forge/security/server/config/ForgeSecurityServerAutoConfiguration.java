@@ -3,17 +3,16 @@ package com.sitionix.forge.security.server.config;
 import com.sitionix.forge.security.server.core.DevJwtServiceIdentityVerifier;
 import com.sitionix.forge.security.server.core.MtlsServiceIdentityVerifier;
 import com.sitionix.forge.security.server.core.PolicyEnforcer;
+import com.sitionix.forge.security.server.core.ServiceIdResolver;
 import com.sitionix.forge.security.server.web.ForgeInternalAuthFilter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
@@ -29,20 +28,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 public class ForgeSecurityServerAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(ForgeSecurityDevJwtConverter.class)
-    @ConfigurationPropertiesBinding
-    public Converter<String, ForgeSecurityServerProperties.DevJwt> forgeSecurityDevJwtConverter() {
-        return new ForgeSecurityDevJwtConverter();
+    @ConditionalOnMissingBean
+    public ServiceIdResolver forgeServiceIdResolver(final ForgeSecurityServerProperties properties) {
+        return new ServiceIdResolver(properties);
     }
 
     @Bean
-    public DevJwtServiceIdentityVerifier devJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties) {
-        return new DevJwtServiceIdentityVerifier(properties);
+    public DevJwtServiceIdentityVerifier devJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties,
+                                                                       final ServiceIdResolver serviceIdResolver) {
+        return new DevJwtServiceIdentityVerifier(properties, serviceIdResolver);
     }
 
     @Bean
-    public MtlsServiceIdentityVerifier mtlsServiceIdentityVerifier() {
-        return new MtlsServiceIdentityVerifier();
+    public MtlsServiceIdentityVerifier mtlsServiceIdentityVerifier(final ServiceIdResolver serviceIdResolver) {
+        return new MtlsServiceIdentityVerifier(serviceIdResolver);
     }
 
     @Bean

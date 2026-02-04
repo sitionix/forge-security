@@ -8,12 +8,23 @@ Forge Security Client auto-attaches service JWTs to outbound HTTP calls in dev-j
 forge:
   security:
     mode: dev-jwt # dev-jwt | mtls
-    service-name: bffservice-sox
+    service-id: sitionix.bff
+    services:
+      auth:
+        id: sitionix.auth
+        hosts:
+          - auth-service
+          - authssox-service
+          - localhost
+      bff:
+        id: sitionix.bff
+        hosts:
+          - bff-service
+          - bffssox-service
     dev:
       jwt-secret: test-internal-secret
       issuer: sitionix-internal
       ttl-seconds: 300
-      static-token: "<FULL_JWT_WITH_kid_it>"
     client:
       enabled: true
 ```
@@ -23,11 +34,6 @@ forge:
 - Uses RestTemplate interceptors; no per-call wiring required.
 - In mtls mode, the interceptor is a no-op.
 - Do not log Authorization headers or JWTs.
-- Override `TargetAudienceResolver` with a custom bean if host-based audiences are not enough.
-
-Minimal IT config (single property):
-```yaml
-forge:
-  security:
-    dev: "<FULL_JWT_WITH_kid_it>"
-```
+- Hostnames are mapped to logical service ids via `forge.security.services`.
+- `sub` and `aud` are always logical service ids.
+- Override `TargetAudienceResolver` with a custom bean if you need non-host resolution.

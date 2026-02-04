@@ -1,0 +1,3 @@
+com/sitionix/forge/security/server/core/DevJwtServiceIdentityVerifierTest.class
+com/sitionix/forge/security/server/core/PolicyEnforcerTest.class
+com/sitionix/forge/security/server/core/ServiceIdResolverTest.class

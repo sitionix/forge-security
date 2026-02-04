@@ -38,8 +38,11 @@ public class ForgeServiceAuthClientHttpRequestInterceptor implements ClientHttpR
         if (headers.containsKey(HttpHeaders.AUTHORIZATION)) {
             return execution.execute(request, body);
         }
-        final String audience = this.targetAudienceResolver.resolve(request);
-        final String authorizationValue = this.headerProvider.getAuthorizationValue(audience);
+        String authorizationValue = this.headerProvider.getAuthorizationValue(null);
+        if (!StringUtils.hasText(authorizationValue)) {
+            final String audience = this.targetAudienceResolver.resolve(request);
+            authorizationValue = this.headerProvider.getAuthorizationValue(audience);
+        }
         if (StringUtils.hasText(authorizationValue)) {
             headers.set(HttpHeaders.AUTHORIZATION, authorizationValue);
         }

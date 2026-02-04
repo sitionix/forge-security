@@ -53,8 +53,13 @@
       "sourceType": "com.sitionix.forge.security.client.config.ForgeSecurityClientProperties"
     },
     {
-      "name": "forge.security.service-name",
+      "name": "forge.security.service-id",
       "type": "java.lang.String",
+      "sourceType": "com.sitionix.forge.security.client.config.ForgeSecurityClientProperties"
+    },
+    {
+      "name": "forge.security.services",
+      "type": "java.util.Map<java.lang.String,com.sitionix.forge.security.client.config.ForgeSecurityClientProperties$ServiceDefinition>",
       "sourceType": "com.sitionix.forge.security.client.config.ForgeSecurityClientProperties"
     }
   ],

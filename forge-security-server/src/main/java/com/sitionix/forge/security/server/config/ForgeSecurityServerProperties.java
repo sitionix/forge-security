@@ -12,13 +12,17 @@ public class ForgeSecurityServerProperties {
 
     private ForgeSecurityMode mode = ForgeSecurityMode.MTLS;
 
-    private String serviceName;
+    private String serviceId;
 
     private DevJwt dev = new DevJwt();
 
     private final Server server = new Server();
 
     private Map<String, Policy> policies = new HashMap<>();
+
+    private Map<String, ServiceDefinition> services = new HashMap<>();
+
+    private List<String> acceptedAudiences = new ArrayList<>();
 
     public ForgeSecurityMode getMode() {
         return this.mode;
@@ -28,12 +32,12 @@ public class ForgeSecurityServerProperties {
         this.mode = mode;
     }
 
-    public String getServiceName() {
-        return this.serviceName;
+    public String getServiceId() {
+        return this.serviceId;
     }
 
-    public void setServiceName(final String serviceName) {
-        this.serviceName = serviceName;
+    public void setServiceId(final String serviceId) {
+        this.serviceId = serviceId;
     }
 
     public DevJwt getDev() {
@@ -57,6 +61,22 @@ public class ForgeSecurityServerProperties {
 
     public void setPolicies(final Map<String, Policy> policies) {
         this.policies = policies;
+    }
+
+    public Map<String, ServiceDefinition> getServices() {
+        return this.services;
+    }
+
+    public void setServices(final Map<String, ServiceDefinition> services) {
+        this.services = services;
+    }
+
+    public List<String> getAcceptedAudiences() {
+        return this.acceptedAudiences;
+    }
+
+    public void setAcceptedAudiences(final List<String> acceptedAudiences) {
+        this.acceptedAudiences = acceptedAudiences;
     }
 
     public static class Server {
@@ -88,19 +108,7 @@ public class ForgeSecurityServerProperties {
 
         private String issuer = "sitionix-internal";
 
-        private List<String> acceptedAudiences = new ArrayList<>();
-
         private long ttlSeconds = 300;
-
-        private String staticToken;
-
-        private boolean itKidBypassEnabled = false;
-
-        private String itKid = "it";
-
-        private boolean itIgnoreExpiry = true;
-
-        private boolean itBypassPolicies = true;
 
         public String getJwtSecret() {
             return this.jwtSecret;
@@ -118,60 +126,12 @@ public class ForgeSecurityServerProperties {
             this.issuer = issuer;
         }
 
-        public List<String> getAcceptedAudiences() {
-            return this.acceptedAudiences;
-        }
-
-        public void setAcceptedAudiences(final List<String> acceptedAudiences) {
-            this.acceptedAudiences = acceptedAudiences;
-        }
-
         public long getTtlSeconds() {
             return this.ttlSeconds;
         }
 
         public void setTtlSeconds(final long ttlSeconds) {
             this.ttlSeconds = ttlSeconds;
-        }
-
-        public String getStaticToken() {
-            return this.staticToken;
-        }
-
-        public void setStaticToken(final String staticToken) {
-            this.staticToken = staticToken;
-        }
-
-        public boolean isItKidBypassEnabled() {
-            return this.itKidBypassEnabled;
-        }
-
-        public void setItKidBypassEnabled(final boolean itKidBypassEnabled) {
-            this.itKidBypassEnabled = itKidBypassEnabled;
-        }
-
-        public String getItKid() {
-            return this.itKid;
-        }
-
-        public void setItKid(final String itKid) {
-            this.itKid = itKid;
-        }
-
-        public boolean isItIgnoreExpiry() {
-            return this.itIgnoreExpiry;
-        }
-
-        public void setItIgnoreExpiry(final boolean itIgnoreExpiry) {
-            this.itIgnoreExpiry = itIgnoreExpiry;
-        }
-
-        public boolean isItBypassPolicies() {
-            return this.itBypassPolicies;
-        }
-
-        public void setItBypassPolicies(final boolean itBypassPolicies) {
-            this.itBypassPolicies = itBypassPolicies;
         }
     }
 
@@ -185,6 +145,29 @@ public class ForgeSecurityServerProperties {
 
         public void setAllow(final List<String> allow) {
             this.allow = allow;
+        }
+    }
+
+    public static class ServiceDefinition {
+
+        private String id;
+
+        private List<String> hosts = new ArrayList<>();
+
+        public String getId() {
+            return this.id;
+        }
+
+        public void setId(final String id) {
+            this.id = id;
+        }
+
+        public List<String> getHosts() {
+            return this.hosts;
+        }
+
+        public void setHosts(final List<String> hosts) {
+            this.hosts = hosts;
         }
     }
 }

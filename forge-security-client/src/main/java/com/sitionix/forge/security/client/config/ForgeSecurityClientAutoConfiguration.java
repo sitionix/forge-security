@@ -1,6 +1,7 @@
 package com.sitionix.forge.security.client.config;
 
 import com.sitionix.forge.security.client.core.ForgeServiceAuthHeaderProvider;
+import com.sitionix.forge.security.client.core.ServiceIdResolver;
 import com.sitionix.forge.security.client.core.ServiceJwtIssuer;
 import com.sitionix.forge.security.client.core.TargetAudienceResolver;
 import com.sitionix.forge.security.client.web.DefaultTargetAudienceResolver;
@@ -54,8 +55,14 @@ public class ForgeSecurityClientAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public TargetAudienceResolver forgeTargetAudienceResolver() {
-        return new DefaultTargetAudienceResolver();
+    public ServiceIdResolver forgeServiceIdResolver(final ForgeSecurityClientProperties properties) {
+        return new ServiceIdResolver(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public TargetAudienceResolver forgeTargetAudienceResolver(final ServiceIdResolver serviceIdResolver) {
+        return new DefaultTargetAudienceResolver(serviceIdResolver);
     }
 
     @Bean

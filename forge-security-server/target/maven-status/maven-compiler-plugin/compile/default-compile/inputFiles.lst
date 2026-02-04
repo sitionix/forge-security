@@ -1,4 +1,3 @@
-/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/config/ForgeSecurityDevJwtConverter.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/config/ForgeSecurityMode.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/config/ForgeSecurityServerAutoConfiguration.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/config/ForgeSecurityServerProperties.java
@@ -6,6 +5,7 @@
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/DevJwtServiceIdentityVerifier.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/MtlsServiceIdentityVerifier.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/PolicyEnforcer.java
+/Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/ServiceIdResolver.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/ServiceIdentity.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/core/ServiceIdentityVerifier.java
 /Users/vladvinskevitch/Documents/Java/sitionix/forge-security/forge-security-server/src/main/java/com/sitionix/forge/security/server/web/ForgeInternalAuthFilter.java

@@ -5,7 +5,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
-
 public class ForgeSecurityClientValidator {
 
     private final ForgeSecurityClientProperties properties;
@@ -56,9 +55,10 @@ public class ForgeSecurityClientValidator {
         if (devConfig.getTtlSeconds() <= 0) {
             throw new IllegalStateException("forge.security.dev.ttl-seconds must be positive for dev-jwt.");
         }
-        if (!StringUtils.hasText(this.properties.getServiceName())) {
-            throw new IllegalStateException("forge.security.service-name must be configured for dev-jwt.");
+        if (!StringUtils.hasText(this.properties.getServiceId())) {
+            throw new IllegalStateException("forge.security.service-id must be configured for dev-jwt.");
         }
+        this.validateServiceMap();
     }
 
     private void validateStaticToken(final boolean isProd,
@@ -76,6 +76,22 @@ public class ForgeSecurityClientValidator {
         }
         if (!isItProfile) {
             throw new IllegalStateException("forge.security.dev.static-token is allowed only in it profile.");
+        }
+        if (!StringUtils.hasText(this.properties.getServiceId())) {
+            throw new IllegalStateException("forge.security.service-id must be configured for dev-jwt.");
+        }
+        this.validateServiceMap();
+    }
+
+    private void validateServiceMap() {
+        if (this.properties.getServices() == null || this.properties.getServices().isEmpty()) {
+            throw new IllegalStateException("forge.security.services must be configured.");
+        }
+        final boolean serviceIdPresent = this.properties.getServices().values().stream()
+                .filter(service -> service != null && StringUtils.hasText(service.getId()))
+                .anyMatch(service -> service.getId().equalsIgnoreCase(this.properties.getServiceId()));
+        if (!serviceIdPresent) {
+            throw new IllegalStateException("forge.security.service-id must be listed in forge.security.services.");
         }
     }
 }

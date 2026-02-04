@@ -15,6 +15,12 @@ import java.util.List;
 
 public class MtlsServiceIdentityVerifier implements ServiceIdentityVerifier {
 
+    private final ServiceIdResolver serviceIdResolver;
+
+    public MtlsServiceIdentityVerifier(final ServiceIdResolver serviceIdResolver) {
+        this.serviceIdResolver = serviceIdResolver;
+    }
+
     @Override
     public ServiceIdentity verify(final HttpServletRequest request) {
         final X509Certificate certificate = this.extractCertificate(request);
@@ -22,10 +28,11 @@ public class MtlsServiceIdentityVerifier implements ServiceIdentityVerifier {
             throw new BadCredentialsException("Missing client certificate");
         }
         final String serviceName = this.extractServiceName(certificate);
-        if (!StringUtils.hasText(serviceName)) {
+        final String resolvedServiceId = this.serviceIdResolver.resolveServiceId(serviceName);
+        if (!StringUtils.hasText(resolvedServiceId)) {
             throw new BadCredentialsException("Client certificate missing service identity");
         }
-        return new ServiceIdentity(serviceName, null, null, null, null, null, false);
+        return new ServiceIdentity(resolvedServiceId, null, null, null, null, null, false);
     }
 
     private X509Certificate extractCertificate(final HttpServletRequest request) {

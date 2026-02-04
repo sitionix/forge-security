@@ -6,7 +6,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.Verification;
 import com.sitionix.forge.security.server.config.ForgeSecurityMode;
 import com.sitionix.forge.security.server.config.ForgeSecurityServerProperties;
 import jakarta.annotation.PostConstruct;
@@ -18,15 +17,19 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
 
     private final ForgeSecurityServerProperties properties;
+    private final ServiceIdResolver serviceIdResolver;
 
     private JWTVerifier jwtVerifier;
 
-    public DevJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties) {
+    public DevJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties,
+                                         final ServiceIdResolver serviceIdResolver) {
         this.properties = properties;
+        this.serviceIdResolver = serviceIdResolver;
     }
 
     @PostConstruct
@@ -39,13 +42,9 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
             return;
         }
         final Algorithm algorithm = Algorithm.HMAC256(devConfig.getJwtSecret());
-        final List<String> audiences = this.getAcceptedAudiences(devConfig);
-        final Verification verification = JWT.require(algorithm)
-                .withIssuer(devConfig.getIssuer());
-        if (!audiences.isEmpty()) {
-            verification.withAudience(audiences.toArray(String[]::new));
-        }
-        this.jwtVerifier = verification.build();
+        this.jwtVerifier = JWT.require(algorithm)
+                .withIssuer(devConfig.getIssuer())
+                .build();
     }
 
     @Override
@@ -53,10 +52,6 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         final String token = this.extractBearerToken(request);
         if (!StringUtils.hasText(token)) {
             throw new BadCredentialsException("Missing internal authorization token");
-        }
-        final DecodedJWT decoded = this.decodeToken(token);
-        if (this.isBypassToken(decoded, token)) {
-            return this.buildBypassIdentity(decoded);
         }
         if (this.jwtVerifier == null) {
             throw new BadCredentialsException("Internal authorization verifier not configured");
@@ -66,6 +61,9 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         if (!StringUtils.hasText(subject)) {
             throw new BadCredentialsException("Internal authorization token missing subject");
         }
+        if (!this.serviceIdResolver.isServiceId(subject)) {
+            throw new BadCredentialsException("Invalid internal authorization token");
+        }
         if (verified.getIssuedAt() == null || verified.getExpiresAt() == null) {
             throw new BadCredentialsException("Internal authorization token missing iat/exp");
         }
@@ -73,7 +71,10 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
             throw new BadCredentialsException("Internal authorization token expired");
         }
         final List<String> audiences = verified.getAudience();
-        final String audience = audiences == null || audiences.isEmpty() ? null : audiences.get(0);
+        if (!this.isAudienceAccepted(audiences)) {
+            throw new BadCredentialsException("Invalid internal authorization token");
+        }
+        final String audience = this.resolveAudience(audiences);
         final List<String> scopes = this.extractScopes(verified);
 
         return new ServiceIdentity(subject,
@@ -85,14 +86,6 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
                 false);
     }
 
-    private DecodedJWT decodeToken(final String token) {
-        try {
-            return JWT.decode(token);
-        } catch (final Exception ex) {
-            throw new BadCredentialsException("Invalid internal authorization token");
-        }
-    }
-
     private DecodedJWT verifyToken(final String token) {
         try {
             return this.jwtVerifier.verify(token);
@@ -101,81 +94,23 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         }
     }
 
-    private boolean isBypassToken(final DecodedJWT decoded, final String rawToken) {
-        final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
-        final String bypassKid = this.resolveBypassKid(devConfig);
-        if (!StringUtils.hasText(bypassKid)) {
-            return false;
-        }
-        if (!bypassKid.equals(decoded.getKeyId())) {
-            return false;
-        }
-        final String staticToken = devConfig.getStaticToken();
-        return !StringUtils.hasText(staticToken) || staticToken.equals(rawToken);
-    }
-
-    private ServiceIdentity buildBypassIdentity(final DecodedJWT decoded) {
-        final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
-        final String subject = decoded.getSubject();
-        if (!StringUtils.hasText(subject)) {
-            throw new BadCredentialsException("Internal authorization token missing subject");
-        }
-        if (!StringUtils.hasText(decoded.getIssuer()) || !decoded.getIssuer().equals(devConfig.getIssuer())) {
-            throw new BadCredentialsException("Invalid internal authorization token");
-        }
-        final Instant issuedAt = decoded.getIssuedAt() == null ? null : decoded.getIssuedAt().toInstant();
-        if (issuedAt == null) {
-            throw new BadCredentialsException("Internal authorization token missing iat");
-        }
-        final Instant expiresAt = decoded.getExpiresAt() == null ? null : decoded.getExpiresAt().toInstant();
-        if (!devConfig.isItIgnoreExpiry()) {
-            if (expiresAt == null) {
-                throw new BadCredentialsException("Internal authorization token missing exp");
-            }
-            if (expiresAt.isBefore(Instant.now())) {
-                throw new BadCredentialsException("Internal authorization token expired");
-            }
-        }
-        final List<String> audiences = decoded.getAudience();
-        final String audience = audiences == null || audiences.isEmpty() ? null : audiences.get(0);
-        if (!this.isAudienceAccepted(audiences)) {
-            throw new BadCredentialsException("Invalid internal authorization token");
-        }
-        final List<String> scopes = this.extractScopes(decoded);
-        return new ServiceIdentity(subject,
-                scopes,
-                issuedAt,
-                expiresAt,
-                decoded.getIssuer(),
-                audience,
-                devConfig.isItBypassPolicies());
-    }
-
-    private String resolveBypassKid(final ForgeSecurityServerProperties.DevJwt devConfig) {
-        if (StringUtils.hasText(devConfig.getStaticToken())) {
-            final DecodedJWT staticDecoded = this.decodeToken(devConfig.getStaticToken());
-            return staticDecoded.getKeyId();
-        }
-        if (devConfig.isItKidBypassEnabled()) {
-            return devConfig.getItKid();
-        }
-        return null;
-    }
-
     private boolean isAudienceAccepted(final List<String> audiences) {
-        final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
-        if (StringUtils.hasText(devConfig.getStaticToken())) {
-            return true;
-        }
-        final List<String> acceptedAudiences = this.getAcceptedAudiences(devConfig);
+        final List<String> acceptedAudiences = this.getAcceptedAudiences();
         if (acceptedAudiences.isEmpty()) {
-            return true;
+            return false;
         }
         if (audiences == null || audiences.isEmpty()) {
             return false;
         }
         for (final String audience : audiences) {
-            if (acceptedAudiences.contains(audience)) {
+            if (!StringUtils.hasText(audience)) {
+                continue;
+            }
+            final String normalized = this.normalize(audience);
+            if (acceptedAudiences.contains(normalized)) {
+                if (!this.serviceIdResolver.isServiceId(audience)) {
+                    return false;
+                }
                 return true;
             }
         }
@@ -221,13 +156,38 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         return scopes;
     }
 
-    private List<String> getAcceptedAudiences(final ForgeSecurityServerProperties.DevJwt devConfig) {
-        if (devConfig.getAcceptedAudiences() == null || devConfig.getAcceptedAudiences().isEmpty()) {
-            if (StringUtils.hasText(this.properties.getServiceName())) {
-                return List.of(this.properties.getServiceName());
+    private String resolveAudience(final List<String> audiences) {
+        if (audiences == null || audiences.isEmpty()) {
+            return null;
+        }
+        for (final String audience : audiences) {
+            if (!StringUtils.hasText(audience)) {
+                continue;
+            }
+            return audience;
+        }
+        return null;
+    }
+
+    private String normalize(final String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private List<String> getAcceptedAudiences() {
+        final List<String> acceptedAudiences = this.properties.getAcceptedAudiences();
+        if (acceptedAudiences == null || acceptedAudiences.isEmpty()) {
+            final String serviceId = this.properties.getServiceId();
+            if (StringUtils.hasText(serviceId)) {
+                return List.of(this.normalize(serviceId));
             }
             return List.of();
         }
-        return devConfig.getAcceptedAudiences();
+        return acceptedAudiences.stream()
+                .filter(StringUtils::hasText)
+                .map(this::normalize)
+                .toList();
     }
 }

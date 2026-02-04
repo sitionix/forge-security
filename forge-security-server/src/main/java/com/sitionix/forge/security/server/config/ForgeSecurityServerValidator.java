@@ -27,8 +27,6 @@ public class ForgeSecurityServerValidator {
         final ForgeSecurityMode mode = this.properties.getMode();
         final boolean isProd = Arrays.stream(this.environment.getActiveProfiles())
                 .anyMatch(profile -> "prod".equalsIgnoreCase(profile));
-        final boolean isItProfile = Arrays.stream(this.environment.getActiveProfiles())
-                .anyMatch(profile -> "it".equalsIgnoreCase(profile));
         if (isProd && mode != ForgeSecurityMode.MTLS) {
             throw new IllegalStateException("forge.security.mode must be mtls in prod.");
         }
@@ -38,7 +36,8 @@ public class ForgeSecurityServerValidator {
         if (mode == null) {
             throw new IllegalStateException("forge.security.mode must be configured.");
         }
-        this.validateItBypass(isProd, isItProfile);
+        this.validateServiceIds();
+        this.validateAcceptedAudiences();
         this.validatePolicies();
         if (mode == ForgeSecurityMode.DEV_JWT) {
             this.validateDevJwt();
@@ -47,12 +46,6 @@ public class ForgeSecurityServerValidator {
 
     private void validateDevJwt() {
         final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
-        if (StringUtils.hasText(devConfig.getStaticToken())) {
-            if (!StringUtils.hasText(devConfig.getIssuer())) {
-                throw new IllegalStateException("forge.security.dev.issuer must be configured for dev-jwt.");
-            }
-            return;
-        }
         if (!StringUtils.hasText(devConfig.getJwtSecret())) {
             throw new IllegalStateException("forge.security.dev.jwt-secret must be configured for dev-jwt.");
         }
@@ -62,24 +55,8 @@ public class ForgeSecurityServerValidator {
         if (devConfig.getTtlSeconds() <= 0) {
             throw new IllegalStateException("forge.security.dev.ttl-seconds must be positive for dev-jwt.");
         }
-        if (!StringUtils.hasText(this.properties.getServiceName())) {
-            throw new IllegalStateException("forge.security.service-name must be configured for dev-jwt.");
-        }
-    }
-
-    private void validateItBypass(final boolean isProd, final boolean isItProfile) {
-        final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
-        if (!devConfig.isItKidBypassEnabled() && !StringUtils.hasText(devConfig.getStaticToken())) {
-            return;
-        }
-        if (isProd) {
-            throw new IllegalStateException("forge.security.dev bypass must not be set in prod.");
-        }
-        if (!isItProfile) {
-            throw new IllegalStateException("forge.security.dev bypass is allowed only in it profile.");
-        }
-        if (!StringUtils.hasText(devConfig.getStaticToken()) && !StringUtils.hasText(devConfig.getItKid())) {
-            throw new IllegalStateException("forge.security.dev.it-kid must be configured when it bypass is enabled.");
+        if (!StringUtils.hasText(this.properties.getServiceId())) {
+            throw new IllegalStateException("forge.security.service-id must be configured for dev-jwt.");
         }
     }
 
@@ -88,7 +65,11 @@ public class ForgeSecurityServerValidator {
         if (policies == null || policies.isEmpty()) {
             return;
         }
+        final List<String> serviceIds = this.getServiceIds();
         policies.forEach((serviceName, policy) -> {
+            if (!this.isLogicalServiceId(serviceName, serviceIds)) {
+                throw new IllegalStateException("forge.security.policies key must be a logical service id: " + serviceName);
+            }
             if (policy == null || policy.getAllow() == null || policy.getAllow().isEmpty()) {
                 return;
             }
@@ -140,5 +121,56 @@ public class ForgeSecurityServerValidator {
             }
         }
         return null;
+    }
+
+    private void validateServiceIds() {
+        if (!StringUtils.hasText(this.properties.getServiceId())) {
+            throw new IllegalStateException("forge.security.service-id must be configured.");
+        }
+        final List<String> serviceIds = this.getServiceIds();
+        if (serviceIds.isEmpty()) {
+            throw new IllegalStateException("forge.security.services must be configured.");
+        }
+        if (!this.isLogicalServiceId(this.properties.getServiceId(), serviceIds)) {
+            throw new IllegalStateException("forge.security.service-id must be listed in forge.security.services.");
+        }
+    }
+
+    private void validateAcceptedAudiences() {
+        final List<String> serviceIds = this.getServiceIds();
+        final List<String> acceptedAudiences = this.properties.getAcceptedAudiences();
+        if (acceptedAudiences == null || acceptedAudiences.isEmpty()) {
+            return;
+        }
+        for (final String audience : acceptedAudiences) {
+            if ("*".equals(StringUtils.trimWhitespace(audience))) {
+                throw new IllegalStateException("forge.security.accepted-audiences must not contain '*'.");
+            }
+            if (!this.isLogicalServiceId(audience, serviceIds)) {
+                throw new IllegalStateException("forge.security.accepted-audiences must contain logical service ids only.");
+            }
+        }
+    }
+
+    private List<String> getServiceIds() {
+        if (this.properties.getServices() == null || this.properties.getServices().isEmpty()) {
+            return List.of();
+        }
+        return this.properties.getServices().values().stream()
+                .filter(service -> service != null && StringUtils.hasText(service.getId()))
+                .map(service -> normalize(service.getId()))
+                .distinct()
+                .toList();
+    }
+
+    private boolean isLogicalServiceId(final String value, final List<String> serviceIds) {
+        if (!StringUtils.hasText(value)) {
+            return false;
+        }
+        return serviceIds.contains(normalize(value));
+    }
+
+    private static String normalize(final String value) {
+        return value.trim().toLowerCase();
     }
 }

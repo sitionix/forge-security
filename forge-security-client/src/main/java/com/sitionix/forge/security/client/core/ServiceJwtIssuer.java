@@ -30,9 +30,9 @@ public class ServiceJwtIssuer {
         if (this.properties.getMode() != ForgeSecurityMode.DEV_JWT) {
             throw new IllegalStateException("Forge security is not in dev-jwt mode");
         }
-        final String serviceName = this.properties.getServiceName();
-        if (!StringUtils.hasText(serviceName)) {
-            throw new IllegalStateException("forge.security.service-name must be configured");
+        final String serviceId = this.properties.getServiceId();
+        if (!StringUtils.hasText(serviceId)) {
+            throw new IllegalStateException("forge.security.service-id must be configured");
         }
         if (!StringUtils.hasText(audience)) {
             throw new IllegalArgumentException("Audience must be provided");
@@ -46,7 +46,7 @@ public class ServiceJwtIssuer {
         final Algorithm algorithm = Algorithm.HMAC256(this.properties.getDev().getJwtSecret());
         final String token = JWT.create()
                 .withIssuer(this.properties.getDev().getIssuer())
-                .withSubject(serviceName)
+                .withSubject(serviceId)
                 .withAudience(audience)
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(expiresAt))
