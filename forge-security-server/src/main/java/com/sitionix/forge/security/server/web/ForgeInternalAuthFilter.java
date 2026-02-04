@@ -1,6 +1,5 @@
 package com.sitionix.forge.security.server.web;
 
-import com.sitionix.forge.security.server.config.ForgeSecurityMode;
 import com.sitionix.forge.security.server.config.ForgeSecurityServerProperties;
 import com.sitionix.forge.security.server.core.PolicyEnforcer;
 import com.sitionix.forge.security.server.core.ServiceIdentity;
@@ -9,7 +8,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.util.AntPathMatcher;
@@ -22,17 +20,14 @@ public class ForgeInternalAuthFilter extends OncePerRequestFilter {
 
     private final ForgeSecurityServerProperties properties;
     private final ServiceIdentityVerifier devJwtVerifier;
-    private final ServiceIdentityVerifier mtlsVerifier;
     private final PolicyEnforcer policyEnforcer;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public ForgeInternalAuthFilter(final ForgeSecurityServerProperties properties,
                                    final ServiceIdentityVerifier devJwtVerifier,
-                                   final ServiceIdentityVerifier mtlsVerifier,
                                    final PolicyEnforcer policyEnforcer) {
         this.properties = properties;
         this.devJwtVerifier = devJwtVerifier;
-        this.mtlsVerifier = mtlsVerifier;
         this.policyEnforcer = policyEnforcer;
     }
 
@@ -40,16 +35,16 @@ public class ForgeInternalAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(final HttpServletRequest request,
                                     final HttpServletResponse response,
                                     final FilterChain filterChain) throws ServletException, IOException {
-        if (!this.properties.getServer().isEnabled() || this.isExcluded(request)) {
+        if (this.isExcluded(request)) {
             filterChain.doFilter(request, response);
             return;
         }
         final ServiceIdentity identity = this.authenticate(request);
+        SecurityContextHolder.getContext()
+                .setAuthentication(ServiceIdentityAuthenticationToken.authenticated(identity));
         if (!identity.policyBypass()) {
             this.policyEnforcer.assertAllowed(identity, request.getMethod(), ForgeSecurityRequestHelper.resolvePath(request));
         }
-        SecurityContextHolder.getContext()
-                .setAuthentication(ServiceIdentityAuthenticationToken.authenticated(identity));
         filterChain.doFilter(request, response);
     }
 
@@ -71,13 +66,6 @@ public class ForgeInternalAuthFilter extends OncePerRequestFilter {
     }
 
     private ServiceIdentity authenticate(final HttpServletRequest request) {
-        final ForgeSecurityMode mode = this.properties.getMode();
-        if (mode == ForgeSecurityMode.DEV_JWT) {
-            return this.devJwtVerifier.verify(request);
-        }
-        if (mode == ForgeSecurityMode.MTLS) {
-            return this.mtlsVerifier.verify(request);
-        }
-        throw new AuthenticationCredentialsNotFoundException("Unsupported internal auth mode");
+        return this.devJwtVerifier.verify(request);
     }
 }

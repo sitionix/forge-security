@@ -2,7 +2,6 @@ package com.sitionix.forge.security.server.core;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.sitionix.forge.security.server.config.ForgeSecurityMode;
 import com.sitionix.forge.security.server.config.ForgeSecurityServerProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
@@ -30,61 +29,20 @@ class DevJwtServiceIdentityVerifierTest {
     @Mock
     private ForgeSecurityServerProperties properties;
 
-    @Mock
-    private ServiceIdResolver serviceIdResolver;
-
     private DevJwtServiceIdentityVerifier verifier;
 
     @BeforeEach
     void setUp() {
         final ForgeSecurityServerProperties.DevJwt devJwt = this.getDevJwt();
-        when(this.properties.getMode()).thenReturn(ForgeSecurityMode.DEV_JWT);
         when(this.properties.getDev()).thenReturn(devJwt);
-        this.verifier = new DevJwtServiceIdentityVerifier(this.properties, this.serviceIdResolver);
+        this.verifier = new DevJwtServiceIdentityVerifier(this.properties);
         this.verifier.init();
     }
 
     @AfterEach
     void tearDown() {
-        verify(this.properties).getMode();
         verify(this.properties).getDev();
-        verifyNoMoreInteractions(this.properties, this.serviceIdResolver);
-    }
-
-    @Test
-    void givenTokenWithHostAudience_whenVerify_thenThrowsBadCredentialsException() {
-        //given
-        final String token = this.getToken("sitionix.bff", "auth-service");
-        final HttpServletRequest request = this.getRequest(token);
-        when(this.properties.getAcceptedAudiences()).thenReturn(List.of("sitionix.auth"));
-        when(this.serviceIdResolver.isServiceId("sitionix.bff")).thenReturn(true);
-
-        //when
-        final Throwable thrown = catchThrowable(() -> this.verifier.verify(request));
-
-        //then
-        assertThat(thrown)
-                .isInstanceOf(BadCredentialsException.class)
-                .hasMessageContaining("Invalid internal authorization token");
-        verify(this.properties).getAcceptedAudiences();
-        verify(this.serviceIdResolver).isServiceId("sitionix.bff");
-    }
-
-    @Test
-    void givenTokenWithHostSubject_whenVerify_thenThrowsBadCredentialsException() {
-        //given
-        final String token = this.getToken("bff-service", "sitionix.auth");
-        final HttpServletRequest request = this.getRequest(token);
-        when(this.serviceIdResolver.isServiceId("bff-service")).thenReturn(false);
-
-        //when
-        final Throwable thrown = catchThrowable(() -> this.verifier.verify(request));
-
-        //then
-        assertThat(thrown)
-                .isInstanceOf(BadCredentialsException.class)
-                .hasMessageContaining("Invalid internal authorization token");
-        verify(this.serviceIdResolver).isServiceId("bff-service");
+        verifyNoMoreInteractions(this.properties);
     }
 
     @Test
@@ -92,8 +50,7 @@ class DevJwtServiceIdentityVerifierTest {
         //given
         final String token = this.getToken("sitionix.bff", "sitionix.notification");
         final HttpServletRequest request = this.getRequest(token);
-        when(this.properties.getAcceptedAudiences()).thenReturn(List.of("sitionix.auth"));
-        when(this.serviceIdResolver.isServiceId("sitionix.bff")).thenReturn(true);
+        when(this.properties.getServiceId()).thenReturn("sitionix.auth");
 
         //when
         final Throwable thrown = catchThrowable(() -> this.verifier.verify(request));
@@ -102,28 +59,40 @@ class DevJwtServiceIdentityVerifierTest {
         assertThat(thrown)
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("Invalid internal authorization token");
-        verify(this.properties).getAcceptedAudiences();
-        verify(this.serviceIdResolver).isServiceId("sitionix.bff");
+        verify(this.properties).getServiceId();
     }
 
     @Test
-    void givenTokenWithLogicalIds_whenVerify_thenReturnsServiceIdentity() {
+    void givenTokenWithoutAudience_whenVerify_thenThrowsBadCredentialsException() {
+        //given
+        final String token = this.getTokenWithoutAudience("sitionix.bff");
+        final HttpServletRequest request = this.getRequest(token);
+        when(this.properties.getServiceId()).thenReturn("sitionix.auth");
+
+        //when
+        final Throwable thrown = catchThrowable(() -> this.verifier.verify(request));
+
+        //then
+        assertThat(thrown)
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Invalid internal authorization token");
+        verify(this.properties).getServiceId();
+    }
+
+    @Test
+    void givenTokenWithMatchingAudience_whenVerify_thenReturnsServiceIdentity() {
         //given
         final String token = this.getToken("sitionix.bff", "sitionix.auth");
         final HttpServletRequest request = this.getRequest(token);
-        when(this.properties.getAcceptedAudiences()).thenReturn(List.of("sitionix.auth"));
-        when(this.serviceIdResolver.isServiceId("sitionix.bff")).thenReturn(true);
-        when(this.serviceIdResolver.isServiceId("sitionix.auth")).thenReturn(true);
+        when(this.properties.getServiceId()).thenReturn("sitionix.auth");
 
         //when
         final ServiceIdentity identity = this.verifier.verify(request);
 
         //then
-        assertThat(identity.serviceName()).isEqualTo("sitionix.bff");
+        assertThat(identity.serviceId()).isEqualTo("sitionix.bff");
         assertThat(identity.audience()).isEqualTo("sitionix.auth");
-        verify(this.properties).getAcceptedAudiences();
-        verify(this.serviceIdResolver).isServiceId("sitionix.bff");
-        verify(this.serviceIdResolver).isServiceId("sitionix.auth");
+        verify(this.properties).getServiceId();
     }
 
     private ForgeSecurityServerProperties.DevJwt getDevJwt() {
@@ -141,6 +110,17 @@ class DevJwtServiceIdentityVerifierTest {
                 .withIssuer("sitionix-internal")
                 .withSubject(subject)
                 .withAudience(audience)
+                .withIssuedAt(Date.from(now))
+                .withExpiresAt(Date.from(expiresAt))
+                .sign(Algorithm.HMAC256("test-internal-secret"));
+    }
+
+    private String getTokenWithoutAudience(final String subject) {
+        final Instant now = Instant.now();
+        final Instant expiresAt = now.plusSeconds(600);
+        return JWT.create()
+                .withIssuer("sitionix-internal")
+                .withSubject(subject)
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(expiresAt))
                 .sign(Algorithm.HMAC256("test-internal-secret"));

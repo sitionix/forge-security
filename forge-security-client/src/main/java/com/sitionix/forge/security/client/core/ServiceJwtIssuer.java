@@ -3,7 +3,6 @@ package com.sitionix.forge.security.client.core;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.sitionix.forge.security.client.config.ForgeSecurityClientProperties;
-import com.sitionix.forge.security.client.config.ForgeSecurityMode;
 import org.springframework.util.StringUtils;
 
 import java.time.Clock;
@@ -27,9 +26,6 @@ public class ServiceJwtIssuer {
     }
 
     public String issueToken(final String audience) {
-        if (this.properties.getMode() != ForgeSecurityMode.DEV_JWT) {
-            throw new IllegalStateException("Forge security is not in dev-jwt mode");
-        }
         final String serviceId = this.properties.getServiceId();
         if (!StringUtils.hasText(serviceId)) {
             throw new IllegalStateException("forge.security.service-id must be configured");

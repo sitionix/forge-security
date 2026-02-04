@@ -6,7 +6,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.sitionix.forge.security.server.config.ForgeSecurityMode;
 import com.sitionix.forge.security.server.config.ForgeSecurityServerProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,29 +16,22 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
 
     private final ForgeSecurityServerProperties properties;
-    private final ServiceIdResolver serviceIdResolver;
 
     private JWTVerifier jwtVerifier;
 
-    public DevJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties,
-                                         final ServiceIdResolver serviceIdResolver) {
+    public DevJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties) {
         this.properties = properties;
-        this.serviceIdResolver = serviceIdResolver;
     }
 
     @PostConstruct
     void init() {
-        if (this.properties.getMode() != ForgeSecurityMode.DEV_JWT) {
-            return;
-        }
         final ForgeSecurityServerProperties.DevJwt devConfig = this.properties.getDev();
         if (!StringUtils.hasText(devConfig.getJwtSecret())) {
-            return;
+            throw new IllegalStateException("forge.security.dev.jwt-secret must be configured.");
         }
         final Algorithm algorithm = Algorithm.HMAC256(devConfig.getJwtSecret());
         this.jwtVerifier = JWT.require(algorithm)
@@ -61,9 +53,6 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         if (!StringUtils.hasText(subject)) {
             throw new BadCredentialsException("Internal authorization token missing subject");
         }
-        if (!this.serviceIdResolver.isServiceId(subject)) {
-            throw new BadCredentialsException("Invalid internal authorization token");
-        }
         if (verified.getIssuedAt() == null || verified.getExpiresAt() == null) {
             throw new BadCredentialsException("Internal authorization token missing iat/exp");
         }
@@ -71,7 +60,11 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
             throw new BadCredentialsException("Internal authorization token expired");
         }
         final List<String> audiences = verified.getAudience();
-        if (!this.isAudienceAccepted(audiences)) {
+        final String serviceId = this.properties.getServiceId();
+        if (!StringUtils.hasText(serviceId)) {
+            throw new BadCredentialsException("Internal authorization service-id not configured");
+        }
+        if (!this.isAudienceAccepted(audiences, serviceId)) {
             throw new BadCredentialsException("Invalid internal authorization token");
         }
         final String audience = this.resolveAudience(audiences);
@@ -94,23 +87,12 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         }
     }
 
-    private boolean isAudienceAccepted(final List<String> audiences) {
-        final List<String> acceptedAudiences = this.getAcceptedAudiences();
-        if (acceptedAudiences.isEmpty()) {
-            return false;
-        }
+    private boolean isAudienceAccepted(final List<String> audiences, final String serviceId) {
         if (audiences == null || audiences.isEmpty()) {
             return false;
         }
         for (final String audience : audiences) {
-            if (!StringUtils.hasText(audience)) {
-                continue;
-            }
-            final String normalized = this.normalize(audience);
-            if (acceptedAudiences.contains(normalized)) {
-                if (!this.serviceIdResolver.isServiceId(audience)) {
-                    return false;
-                }
+            if (StringUtils.hasText(audience) && serviceId.equals(audience)) {
                 return true;
             }
         }
@@ -169,25 +151,4 @@ public class DevJwtServiceIdentityVerifier implements ServiceIdentityVerifier {
         return null;
     }
 
-    private String normalize(final String value) {
-        if (!StringUtils.hasText(value)) {
-            return null;
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private List<String> getAcceptedAudiences() {
-        final List<String> acceptedAudiences = this.properties.getAcceptedAudiences();
-        if (acceptedAudiences == null || acceptedAudiences.isEmpty()) {
-            final String serviceId = this.properties.getServiceId();
-            if (StringUtils.hasText(serviceId)) {
-                return List.of(this.normalize(serviceId));
-            }
-            return List.of();
-        }
-        return acceptedAudiences.stream()
-                .filter(StringUtils::hasText)
-                .map(this::normalize)
-                .toList();
-    }
 }

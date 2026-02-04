@@ -18,14 +18,14 @@ public class PolicyEnforcer {
     }
 
     public void assertAllowed(final ServiceIdentity identity, final String requestMethod, final String requestPath) {
-        if (identity == null || !StringUtils.hasText(identity.serviceName())) {
+        if (identity == null || !StringUtils.hasText(identity.serviceId())) {
             throw new AccessDeniedException("Internal service identity missing");
         }
         final Map<String, ForgeSecurityServerProperties.Policy> policies = this.properties.getPolicies();
         if (policies == null || policies.isEmpty()) {
             throw new AccessDeniedException("Internal service identity not permitted");
         }
-        final ForgeSecurityServerProperties.Policy policy = policies.get(identity.serviceName());
+        final ForgeSecurityServerProperties.Policy policy = policies.get(identity.serviceId());
         if (policy == null || policy.getAllow() == null || policy.getAllow().isEmpty()) {
             throw new AccessDeniedException("Internal service identity not permitted");
         }

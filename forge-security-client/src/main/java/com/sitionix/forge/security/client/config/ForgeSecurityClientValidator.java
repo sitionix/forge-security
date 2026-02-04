@@ -1,97 +1,62 @@
 package com.sitionix.forge.security.client.config;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 public class ForgeSecurityClientValidator {
 
     private final ForgeSecurityClientProperties properties;
-    private final Environment environment;
 
-    public ForgeSecurityClientValidator(final ForgeSecurityClientProperties properties,
-                                        final Environment environment) {
+    public ForgeSecurityClientValidator(final ForgeSecurityClientProperties properties) {
         this.properties = properties;
-        this.environment = environment;
     }
 
     @PostConstruct
     void validate() {
-        if (!this.properties.getClient().isEnabled()) {
-            return;
-        }
-        final ForgeSecurityMode mode = this.properties.getMode();
-        final boolean isProd = Arrays.stream(this.environment.getActiveProfiles())
-                .anyMatch(profile -> "prod".equalsIgnoreCase(profile));
-        final boolean isItProfile = Arrays.stream(this.environment.getActiveProfiles())
-                .anyMatch(profile -> "it".equalsIgnoreCase(profile));
-        if (isProd && mode != ForgeSecurityMode.MTLS) {
-            throw new IllegalStateException("forge.security.mode must be mtls in prod.");
-        }
-        if (isProd && StringUtils.hasText(this.properties.getDev().getJwtSecret())) {
-            throw new IllegalStateException("forge.security.dev.jwt-secret must not be set in prod.");
-        }
-        if (mode == null) {
-            throw new IllegalStateException("forge.security.mode must be configured.");
-        }
-        this.validateStaticToken(isProd, isItProfile, mode);
-        if (mode == ForgeSecurityMode.DEV_JWT) {
-            this.validateDevJwt();
-        }
+        this.validateDevJwt();
+        this.validateTargets();
     }
 
     private void validateDevJwt() {
         final ForgeSecurityClientProperties.DevJwt devConfig = this.properties.getDev();
-        if (StringUtils.hasText(devConfig.getStaticToken())) {
-            return;
-        }
         if (!StringUtils.hasText(devConfig.getJwtSecret())) {
-            throw new IllegalStateException("forge.security.dev.jwt-secret must be configured for dev-jwt.");
+            throw new IllegalStateException("forge.security.dev.jwt-secret must be configured.");
         }
         if (!StringUtils.hasText(devConfig.getIssuer())) {
-            throw new IllegalStateException("forge.security.dev.issuer must be configured for dev-jwt.");
+            throw new IllegalStateException("forge.security.dev.issuer must be configured.");
         }
         if (devConfig.getTtlSeconds() <= 0) {
-            throw new IllegalStateException("forge.security.dev.ttl-seconds must be positive for dev-jwt.");
+            throw new IllegalStateException("forge.security.dev.ttl-seconds must be positive.");
         }
         if (!StringUtils.hasText(this.properties.getServiceId())) {
-            throw new IllegalStateException("forge.security.service-id must be configured for dev-jwt.");
+            throw new IllegalStateException("forge.security.service-id must be configured.");
         }
-        this.validateServiceMap();
     }
 
-    private void validateStaticToken(final boolean isProd,
-                                     final boolean isItProfile,
-                                     final ForgeSecurityMode mode) {
-        final ForgeSecurityClientProperties.DevJwt devConfig = this.properties.getDev();
-        if (!StringUtils.hasText(devConfig.getStaticToken())) {
-            return;
+    private void validateTargets() {
+        final Map<String, ForgeSecurityClientProperties.TargetDefinition> targets = this.properties.getTargets();
+        if (targets == null || targets.isEmpty()) {
+            throw new IllegalStateException("forge.security.targets must be configured.");
         }
-        if (mode != ForgeSecurityMode.DEV_JWT) {
-            throw new IllegalStateException("forge.security.dev.static-token requires dev-jwt mode.");
-        }
-        if (isProd) {
-            throw new IllegalStateException("forge.security.dev.static-token must not be set in prod.");
-        }
-        if (!isItProfile) {
-            throw new IllegalStateException("forge.security.dev.static-token is allowed only in it profile.");
-        }
-        if (!StringUtils.hasText(this.properties.getServiceId())) {
-            throw new IllegalStateException("forge.security.service-id must be configured for dev-jwt.");
-        }
-        this.validateServiceMap();
-    }
-
-    private void validateServiceMap() {
-        if (this.properties.getServices() == null || this.properties.getServices().isEmpty()) {
-            throw new IllegalStateException("forge.security.services must be configured.");
-        }
-        final boolean serviceIdPresent = this.properties.getServices().values().stream()
-                .filter(service -> service != null && StringUtils.hasText(service.getId()))
-                .anyMatch(service -> service.getId().equalsIgnoreCase(this.properties.getServiceId()));
-        if (!serviceIdPresent) {
-            throw new IllegalStateException("forge.security.service-id must be listed in forge.security.services.");
+        final Set<String> hosts = new HashSet<>();
+        for (final Map.Entry<String, ForgeSecurityClientProperties.TargetDefinition> entry : targets.entrySet()) {
+            final String targetId = entry.getKey();
+            if (!StringUtils.hasText(targetId)) {
+                throw new IllegalStateException("forge.security.targets key must be a logical service id.");
+            }
+            final ForgeSecurityClientProperties.TargetDefinition target = entry.getValue();
+            if (target == null || !StringUtils.hasText(target.getHost())) {
+                throw new IllegalStateException("forge.security.targets." + targetId + ".host must be configured.");
+            }
+            final String normalizedHost = target.getHost().trim().toLowerCase(Locale.ROOT);
+            if (!hosts.add(normalizedHost)) {
+                throw new IllegalStateException("forge.security.targets host must be unique: " + target.getHost());
+            }
         }
     }
 }

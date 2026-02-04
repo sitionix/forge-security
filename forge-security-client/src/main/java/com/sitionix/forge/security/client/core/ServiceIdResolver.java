@@ -5,44 +5,29 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class ServiceIdResolver {
 
     private final Map<String, String> aliasToServiceId;
-    private final Set<String> serviceIds;
 
     public ServiceIdResolver(final ForgeSecurityClientProperties properties) {
         final Map<String, String> aliasMap = new HashMap<>();
-        final Set<String> ids = new HashSet<>();
-        final Map<String, ForgeSecurityClientProperties.ServiceDefinition> services =
-                properties == null ? null : properties.getServices();
-        if (services != null) {
-            services.forEach((key, service) -> {
-                if (service == null || !StringUtils.hasText(service.getId())) {
+        final Map<String, ForgeSecurityClientProperties.TargetDefinition> targets =
+                properties == null ? null : properties.getTargets();
+        if (targets != null) {
+            targets.forEach((targetId, target) -> {
+                if (target == null || !StringUtils.hasText(targetId) || !StringUtils.hasText(target.getHost())) {
                     return;
                 }
-                final String normalizedId = this.normalize(service.getId());
-                if (StringUtils.hasText(normalizedId)) {
-                    aliasMap.put(normalizedId, normalizedId);
-                    ids.add(normalizedId);
-                }
-                if (service.getHosts() == null) {
-                    return;
-                }
-                for (final String host : service.getHosts()) {
-                    final String normalizedHost = this.normalize(this.stripPort(host));
-                    if (StringUtils.hasText(normalizedHost)) {
-                        aliasMap.put(normalizedHost, normalizedId);
-                    }
+                final String normalizedHost = this.normalize(this.stripPort(target.getHost()));
+                if (StringUtils.hasText(normalizedHost)) {
+                    aliasMap.put(normalizedHost, targetId);
                 }
             });
         }
         this.aliasToServiceId = Map.copyOf(aliasMap);
-        this.serviceIds = Set.copyOf(ids);
     }
 
     public String resolveServiceId(final String host) {
@@ -51,18 +36,6 @@ public class ServiceIdResolver {
             return null;
         }
         return this.aliasToServiceId.get(normalized);
-    }
-
-    public boolean isServiceId(final String value) {
-        final String normalized = this.normalize(value);
-        if (!StringUtils.hasText(normalized)) {
-            return false;
-        }
-        return this.serviceIds.contains(normalized);
-    }
-
-    public boolean hasServiceIds() {
-        return !this.serviceIds.isEmpty();
     }
 
     private String stripPort(final String value) {

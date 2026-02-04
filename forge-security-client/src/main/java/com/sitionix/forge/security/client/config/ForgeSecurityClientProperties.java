@@ -2,31 +2,17 @@ package com.sitionix.forge.security.client.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @ConfigurationProperties(prefix = "forge.security")
 public class ForgeSecurityClientProperties {
 
-    private ForgeSecurityMode mode = ForgeSecurityMode.MTLS;
-
     private String serviceId;
 
     private DevJwt dev = new DevJwt();
 
-    private final Client client = new Client();
-
-    private Map<String, ServiceDefinition> services = new HashMap<>();
-
-    public ForgeSecurityMode getMode() {
-        return this.mode;
-    }
-
-    public void setMode(final ForgeSecurityMode mode) {
-        this.mode = mode;
-    }
+    private Map<String, TargetDefinition> targets = new HashMap<>();
 
     public String getServiceId() {
         return this.serviceId;
@@ -47,16 +33,12 @@ public class ForgeSecurityClientProperties {
         this.dev = dev;
     }
 
-    public Client getClient() {
-        return this.client;
+    public Map<String, TargetDefinition> getTargets() {
+        return this.targets;
     }
 
-    public Map<String, ServiceDefinition> getServices() {
-        return this.services;
-    }
-
-    public void setServices(final Map<String, ServiceDefinition> services) {
-        this.services = services;
+    public void setTargets(final Map<String, TargetDefinition> targets) {
+        this.targets = targets;
     }
 
     public static class DevJwt {
@@ -66,8 +48,6 @@ public class ForgeSecurityClientProperties {
         private String issuer = "sitionix-internal";
 
         private long ttlSeconds = 300;
-
-        private String staticToken;
 
         public String getJwtSecret() {
             return this.jwtSecret;
@@ -92,49 +72,18 @@ public class ForgeSecurityClientProperties {
         public void setTtlSeconds(final long ttlSeconds) {
             this.ttlSeconds = ttlSeconds;
         }
-
-        public String getStaticToken() {
-            return this.staticToken;
-        }
-
-        public void setStaticToken(final String staticToken) {
-            this.staticToken = staticToken;
-        }
     }
 
-    public static class Client {
+    public static class TargetDefinition {
 
-        private boolean enabled = true;
+        private String host;
 
-        public boolean isEnabled() {
-            return this.enabled;
+        public String getHost() {
+            return this.host;
         }
 
-        public void setEnabled(final boolean enabled) {
-            this.enabled = enabled;
-        }
-    }
-
-    public static class ServiceDefinition {
-
-        private String id;
-
-        private List<String> hosts = new ArrayList<>();
-
-        public String getId() {
-            return this.id;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
-        }
-
-        public List<String> getHosts() {
-            return this.hosts;
-        }
-
-        public void setHosts(final List<String> hosts) {
-            this.hosts = hosts;
+        public void setHost(final String host) {
+            this.host = host;
         }
     }
 }

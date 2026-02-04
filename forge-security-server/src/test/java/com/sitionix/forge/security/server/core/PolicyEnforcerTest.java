@@ -59,8 +59,8 @@ class PolicyEnforcerTest {
         return policy;
     }
 
-    private ServiceIdentity getIdentity(final String serviceName) {
-        return new ServiceIdentity(serviceName,
+    private ServiceIdentity getIdentity(final String serviceId) {
+        return new ServiceIdentity(serviceId,
                 List.of(),
                 Instant.now(),
                 Instant.now().plusSeconds(300),

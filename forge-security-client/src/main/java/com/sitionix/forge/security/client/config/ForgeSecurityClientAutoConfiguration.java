@@ -11,12 +11,9 @@ import com.sitionix.forge.security.client.web.ForgeServiceAuthRestTemplatePostPr
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,16 +21,8 @@ import java.time.Clock;
 
 @AutoConfiguration
 @ConditionalOnClass(RestTemplate.class)
-@ConditionalOnProperty(prefix = "forge.security.client", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(ForgeSecurityClientProperties.class)
 public class ForgeSecurityClientAutoConfiguration {
-
-    @Bean
-    @ConditionalOnMissingBean(ForgeSecurityDevJwtConverter.class)
-    @ConfigurationPropertiesBinding
-    public Converter<String, ForgeSecurityClientProperties.DevJwt> forgeSecurityDevJwtConverter() {
-        return new ForgeSecurityDevJwtConverter();
-    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -67,10 +56,9 @@ public class ForgeSecurityClientAutoConfiguration {
 
     @Bean
     public ClientHttpRequestInterceptor forgeServiceAuthClientHttpRequestInterceptor(
-            final ForgeSecurityClientProperties properties,
             final ForgeServiceAuthHeaderProvider headerProvider,
             final TargetAudienceResolver targetAudienceResolver) {
-        return new ForgeServiceAuthClientHttpRequestInterceptor(properties, headerProvider, targetAudienceResolver);
+        return new ForgeServiceAuthClientHttpRequestInterceptor(headerProvider, targetAudienceResolver);
     }
 
     @Bean
@@ -86,8 +74,7 @@ public class ForgeSecurityClientAutoConfiguration {
     }
 
     @Bean
-    public ForgeSecurityClientValidator forgeSecurityClientValidator(final ForgeSecurityClientProperties properties,
-                                                                     final org.springframework.core.env.Environment environment) {
-        return new ForgeSecurityClientValidator(properties, environment);
+    public ForgeSecurityClientValidator forgeSecurityClientValidator(final ForgeSecurityClientProperties properties) {
+        return new ForgeSecurityClientValidator(properties);
     }
 }

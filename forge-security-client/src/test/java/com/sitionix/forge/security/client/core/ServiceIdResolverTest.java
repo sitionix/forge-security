@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,17 +26,17 @@ class ServiceIdResolverTest {
 
     @BeforeEach
     void setUp() {
-        final Map<String, ForgeSecurityClientProperties.ServiceDefinition> services = new HashMap<>();
-        services.put("auth", this.getServiceDefinition("sitionix.auth", List.of("auth-service", "localhost")));
-        services.put("bff", this.getServiceDefinition("sitionix.bff", List.of("bff-service")));
-        when(this.properties.getServices()).thenReturn(services);
+        final Map<String, ForgeSecurityClientProperties.TargetDefinition> targets = new HashMap<>();
+        targets.put("sitionix.auth", this.getTargetDefinition("auth-service"));
+        targets.put("sitionix.bff", this.getTargetDefinition("bff-service"));
+        when(this.properties.getTargets()).thenReturn(targets);
 
         this.serviceIdResolver = new ServiceIdResolver(this.properties);
     }
 
     @AfterEach
     void tearDown() {
-        verify(this.properties).getServices();
+        verify(this.properties).getTargets();
         verifyNoMoreInteractions(this.properties);
     }
 
@@ -89,12 +88,10 @@ class ServiceIdResolverTest {
         assertThat(result).isEqualTo("sitionix.auth");
     }
 
-    private ForgeSecurityClientProperties.ServiceDefinition getServiceDefinition(final String id,
-                                                                                 final List<String> hosts) {
-        final ForgeSecurityClientProperties.ServiceDefinition definition =
-                new ForgeSecurityClientProperties.ServiceDefinition();
-        definition.setId(id);
-        definition.setHosts(hosts);
+    private ForgeSecurityClientProperties.TargetDefinition getTargetDefinition(final String host) {
+        final ForgeSecurityClientProperties.TargetDefinition definition =
+                new ForgeSecurityClientProperties.TargetDefinition();
+        definition.setHost(host);
         return definition;
     }
 }

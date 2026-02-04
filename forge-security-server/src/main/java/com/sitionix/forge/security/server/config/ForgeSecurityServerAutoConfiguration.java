@@ -1,15 +1,12 @@
 package com.sitionix.forge.security.server.config;
 
 import com.sitionix.forge.security.server.core.DevJwtServiceIdentityVerifier;
-import com.sitionix.forge.security.server.core.MtlsServiceIdentityVerifier;
 import com.sitionix.forge.security.server.core.PolicyEnforcer;
-import com.sitionix.forge.security.server.core.ServiceIdResolver;
 import com.sitionix.forge.security.server.web.ForgeInternalAuthFilter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -23,25 +20,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 
 @AutoConfiguration
 @ConditionalOnClass({HttpSecurity.class, ForgeInternalAuthFilter.class})
-@ConditionalOnProperty(prefix = "forge.security.server", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(ForgeSecurityServerProperties.class)
 public class ForgeSecurityServerAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
-    public ServiceIdResolver forgeServiceIdResolver(final ForgeSecurityServerProperties properties) {
-        return new ServiceIdResolver(properties);
-    }
-
-    @Bean
-    public DevJwtServiceIdentityVerifier devJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties,
-                                                                       final ServiceIdResolver serviceIdResolver) {
-        return new DevJwtServiceIdentityVerifier(properties, serviceIdResolver);
-    }
-
-    @Bean
-    public MtlsServiceIdentityVerifier mtlsServiceIdentityVerifier(final ServiceIdResolver serviceIdResolver) {
-        return new MtlsServiceIdentityVerifier(serviceIdResolver);
+    public DevJwtServiceIdentityVerifier devJwtServiceIdentityVerifier(final ForgeSecurityServerProperties properties) {
+        return new DevJwtServiceIdentityVerifier(properties);
     }
 
     @Bean
@@ -52,9 +36,8 @@ public class ForgeSecurityServerAutoConfiguration {
     @Bean
     public ForgeInternalAuthFilter forgeInternalAuthFilter(final ForgeSecurityServerProperties properties,
                                                            final DevJwtServiceIdentityVerifier devJwtVerifier,
-                                                           final MtlsServiceIdentityVerifier mtlsVerifier,
                                                            final PolicyEnforcer policyEnforcer) {
-        return new ForgeInternalAuthFilter(properties, devJwtVerifier, mtlsVerifier, policyEnforcer);
+        return new ForgeInternalAuthFilter(properties, devJwtVerifier, policyEnforcer);
     }
 
     @Bean
@@ -97,6 +80,6 @@ public class ForgeSecurityServerAutoConfiguration {
     @Bean
     public ForgeSecurityServerValidator forgeSecurityServerValidator(final ForgeSecurityServerProperties properties,
                                                                      final org.springframework.core.env.Environment environment) {
-        return new ForgeSecurityServerValidator(properties, environment);
+        return new ForgeSecurityServerValidator(properties);
     }
 }
