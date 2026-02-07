@@ -20,12 +20,14 @@
     <modules>
         <module>forge-security-server</module>
         <module>forge-security-client</module>
+        <module>forge-security-user-jwt</module>
     </modules>
 
     <properties>
         <java.version>21</java.version>
         <spring.version>3.3.4</spring.version>
         <auth0.jwt.version>4.4.0</auth0.jwt.version>
+        <athssox.api.version>0.0.24</athssox.api.version>
     </properties>
 
     <dependencyManagement>
@@ -50,4 +52,17 @@
             <url>https://maven.pkg.github.com/sitionix/forge-security</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>github-app-afesox</id>
+            <url>https://maven.pkg.github.com/sitionix/app-afesox</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

@@ -22,6 +22,7 @@ public class ForgeInternalAuthFilter extends OncePerRequestFilter {
     private final ServiceIdentityVerifier devJwtVerifier;
     private final PolicyEnforcer policyEnforcer;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private static final String USER_ID_HEADER = "X-Forge-User-Sub";
 
     public ForgeInternalAuthFilter(final ForgeSecurityServerProperties properties,
                                    final ServiceIdentityVerifier devJwtVerifier,
@@ -40,8 +41,13 @@ public class ForgeInternalAuthFilter extends OncePerRequestFilter {
             return;
         }
         final ServiceIdentity identity = this.authenticate(request);
-        SecurityContextHolder.getContext()
-                .setAuthentication(ServiceIdentityAuthenticationToken.authenticated(identity));
+        final ServiceIdentityAuthenticationToken authentication =
+                ServiceIdentityAuthenticationToken.authenticated(identity);
+        final String userSub = request.getHeader(USER_ID_HEADER);
+        if (StringUtils.hasText(userSub)) {
+            authentication.setDetails(userSub);
+        }
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         if (!identity.policyBypass()) {
             this.policyEnforcer.assertAllowed(identity, request.getMethod(), ForgeSecurityRequestHelper.resolvePath(request));
         }
