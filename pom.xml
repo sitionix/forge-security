@@ -27,7 +27,7 @@
         <java.version>21</java.version>
         <spring.version>3.3.4</spring.version>
         <auth0.jwt.version>4.4.0</auth0.jwt.version>
-        <athssox.api.version>0.0.24</athssox.api.version>
+        <athssox.api.version>0.0.25</athssox.api.version>
     </properties>
 
     <dependencyManagement>
