@@ -10,8 +10,8 @@
         <version>0.0.4</version>
     </parent>
 
-    <artifactId>forge-security-server</artifactId>
-    <name>forge-security-server</name>
+    <artifactId>forge-security-user-jwt</artifactId>
+    <name>forge-security-user-jwt</name>
 
     <dependencies>
         <dependency>
@@ -21,6 +21,10 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -40,6 +44,15 @@
             <version>${auth0.jwt.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.afesox</groupId>
+            <artifactId>app-afesox-athssox-client-stable</artifactId>
+            <version>${athssox.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
@@ -53,9 +66,25 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

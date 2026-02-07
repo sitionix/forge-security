@@ -2,6 +2,7 @@ package com.sitionix.forge.security.server.config;
 
 import com.sitionix.forge.security.server.core.DevJwtServiceIdentityVerifier;
 import com.sitionix.forge.security.server.core.PolicyEnforcer;
+import com.sitionix.forge.security.server.user.HeaderForgeUserClient;
 import com.sitionix.forge.security.server.web.ForgeInternalAuthFilter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
@@ -21,6 +23,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 @AutoConfiguration
 @ConditionalOnClass({HttpSecurity.class, ForgeInternalAuthFilter.class})
 @EnableConfigurationProperties(ForgeSecurityServerProperties.class)
+@ComponentScan(basePackageClasses = HeaderForgeUserClient.class)
 public class ForgeSecurityServerAutoConfiguration {
 
     @Bean
