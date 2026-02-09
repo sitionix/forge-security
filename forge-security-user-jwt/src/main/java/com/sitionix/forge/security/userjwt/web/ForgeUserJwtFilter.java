@@ -40,12 +40,15 @@ public class ForgeUserJwtFilter extends OncePerRequestFilter {
         }
         final String token = header.substring(prefix.length()).trim();
         if (!StringUtils.hasText(token)) {
-            this.errorResponseWriter.write(response, HttpServletResponse.SC_UNAUTHORIZED,
-                    "unauthorized", "Invalid token");
+            filterChain.doFilter(request, response);
+            return;
+        }
+        if (!this.verifier.looksLikeUserJwt(token)) {
+            filterChain.doFilter(request, response);
             return;
         }
         try {
-            final ForgeUser user = this.verifier.verify(token);
+            final ForgeUser user = this.verifier.validateUserJwt(token);
             SecurityContextHolder.getContext()
                     .setAuthentication(UserJwtAuthenticationToken.authenticated(user));
             filterChain.doFilter(request, response);
