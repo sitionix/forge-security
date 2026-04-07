@@ -17,6 +17,7 @@ public class ForgeSecurityServerValidator {
     @PostConstruct
     void validate() {
         this.validateDevJwt();
+        this.validateExcludes();
         this.validatePolicies();
     }
 
@@ -63,6 +64,18 @@ public class ForgeSecurityServerValidator {
         });
     }
 
+    private void validateExcludes() {
+        final List<String> excludes = this.properties.getServer().getExcludes();
+        if (excludes == null || excludes.isEmpty()) {
+            return;
+        }
+        for (final String exclude : excludes) {
+            if (!this.isValidExcludeEntry(exclude)) {
+                throw new IllegalStateException("Invalid forge.security.server.excludes entry: " + exclude);
+            }
+        }
+    }
+
     private boolean isValidPolicyEntry(final String entry) {
         if (!StringUtils.hasText(entry)) {
             return false;
@@ -78,6 +91,21 @@ public class ForgeSecurityServerValidator {
         }
         final String path = normalized.substring(method.length()).trim();
         return StringUtils.hasText(path) && path.startsWith("/");
+    }
+
+    private boolean isValidExcludeEntry(final String entry) {
+        if (!StringUtils.hasText(entry)) {
+            return false;
+        }
+        final String trimmed = entry.trim();
+        return trimmed.startsWith("/") && !this.containsPathPattern(trimmed);
+    }
+
+    private boolean containsPathPattern(final String path) {
+        return path.contains("*")
+                || path.contains("?")
+                || path.contains("{")
+                || path.contains("}");
     }
 
     private String stripScope(final String entry) {
