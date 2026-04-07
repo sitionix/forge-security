@@ -19,6 +19,9 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnClass({HttpSecurity.class, ForgeInternalAuthFilter.class})
@@ -55,16 +58,23 @@ public class ForgeSecurityServerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(SecurityFilterChain.class)
     public SecurityFilterChain forgeSecurityFilterChain(final HttpSecurity http,
+                                                        final ForgeSecurityServerProperties properties,
                                                         final ForgeInternalAuthFilter forgeInternalAuthFilter,
                                                         final ObjectProvider<AuthenticationEntryPoint> entryPointProvider,
                                                         final ObjectProvider<AccessDeniedHandler> accessDeniedHandlerProvider)
             throws Exception {
         final AuthenticationEntryPoint entryPoint = entryPointProvider.getIfAvailable();
         final AccessDeniedHandler accessDeniedHandler = accessDeniedHandlerProvider.getIfAvailable();
+        final String[] publicEndpoints = this.resolvePublicEndpoints(properties);
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+                .authorizeHttpRequests(authorize -> {
+                    if (publicEndpoints.length > 0) {
+                        authorize.requestMatchers(publicEndpoints).permitAll();
+                    }
+                    authorize.anyRequest().authenticated();
+                })
                 .addFilterBefore(forgeInternalAuthFilter, AuthorizationFilter.class);
 
         if (entryPoint != null || accessDeniedHandler != null) {
@@ -78,6 +88,18 @@ public class ForgeSecurityServerAutoConfiguration {
             });
         }
         return http.build();
+    }
+
+    private String[] resolvePublicEndpoints(final ForgeSecurityServerProperties properties) {
+        final List<String> excludes = properties.getServer().getExcludes();
+        if (excludes == null || excludes.isEmpty()) {
+            return new String[0];
+        }
+        return excludes.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .toArray(String[]::new);
     }
 
     @Bean
