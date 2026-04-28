@@ -29,6 +29,8 @@ public class ForgeSecurityClientAutoConfiguration {
 
     private static final String CURRENT_FORGE_USER_CLASS =
             "com.sitionix.forge.security.userjwt.web.CurrentForgeUser";
+    private static final String FORGE_USER_CLIENT_CLASS =
+            "com.sitionix.forge.security.server.user.ForgeUserClient";
 
     @Bean
     @ConditionalOnMissingBean
@@ -66,8 +68,10 @@ public class ForgeSecurityClientAutoConfiguration {
             final TargetAudienceResolver targetAudienceResolver,
             final ApplicationContext applicationContext) {
         final ObjectProvider<?> currentForgeUserProvider = this.resolveCurrentForgeUserProvider(applicationContext);
+        final ObjectProvider<?> forgeUserClientProvider = this.resolveForgeUserClientProvider(applicationContext);
         return new ForgeServiceAuthClientHttpRequestInterceptor(headerProvider, targetAudienceResolver,
-                currentForgeUserProvider);
+                currentForgeUserProvider,
+                forgeUserClientProvider);
     }
 
     @Bean
@@ -88,15 +92,24 @@ public class ForgeSecurityClientAutoConfiguration {
     }
 
     private ObjectProvider<?> resolveCurrentForgeUserProvider(final ApplicationContext applicationContext) {
+        return this.resolveOptionalProvider(applicationContext, CURRENT_FORGE_USER_CLASS);
+    }
+
+    private ObjectProvider<?> resolveForgeUserClientProvider(final ApplicationContext applicationContext) {
+        return this.resolveOptionalProvider(applicationContext, FORGE_USER_CLIENT_CLASS);
+    }
+
+    private ObjectProvider<?> resolveOptionalProvider(final ApplicationContext applicationContext,
+                                                      final String className) {
         if (applicationContext == null) {
             return null;
         }
         final ClassLoader classLoader = applicationContext.getClassLoader();
-        if (!ClassUtils.isPresent(CURRENT_FORGE_USER_CLASS, classLoader)) {
+        if (!ClassUtils.isPresent(className, classLoader)) {
             return null;
         }
         try {
-            final Class<?> userProviderClass = Class.forName(CURRENT_FORGE_USER_CLASS, false, classLoader);
+            final Class<?> userProviderClass = Class.forName(className, false, classLoader);
             return applicationContext.getBeanProvider(userProviderClass);
         } catch (final ClassNotFoundException ex) {
             return null;
