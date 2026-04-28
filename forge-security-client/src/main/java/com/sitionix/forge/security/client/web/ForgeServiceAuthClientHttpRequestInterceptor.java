@@ -17,17 +17,21 @@ public class ForgeServiceAuthClientHttpRequestInterceptor implements ClientHttpR
     private static final String FORGE_USER_SUB_HEADER = "X-Forge-User-Sub";
     private static final String CURRENT_USER_METHOD = "currentUser";
     private static final String SUBJECT_METHOD = "getSubject";
+    private static final String USER_ID_METHOD = "getUserId";
 
     private final ForgeServiceAuthHeaderProvider headerProvider;
     private final TargetAudienceResolver targetAudienceResolver;
     private final ObjectProvider<?> currentForgeUserProvider;
+    private final ObjectProvider<?> forgeUserClientProvider;
 
     public ForgeServiceAuthClientHttpRequestInterceptor(final ForgeServiceAuthHeaderProvider headerProvider,
                                                         final TargetAudienceResolver targetAudienceResolver,
-                                                        final ObjectProvider<?> currentForgeUserProvider) {
+                                                        final ObjectProvider<?> currentForgeUserProvider,
+                                                        final ObjectProvider<?> forgeUserClientProvider) {
         this.headerProvider = headerProvider;
         this.targetAudienceResolver = targetAudienceResolver;
         this.currentForgeUserProvider = currentForgeUserProvider;
+        this.forgeUserClientProvider = forgeUserClientProvider;
     }
 
     @Override
@@ -59,6 +63,14 @@ public class ForgeServiceAuthClientHttpRequestInterceptor implements ClientHttpR
     }
 
     private String resolveForgeUserSubject() {
+        final String subjectFromCurrentUser = this.resolveFromCurrentForgeUserProvider();
+        if (StringUtils.hasText(subjectFromCurrentUser)) {
+            return subjectFromCurrentUser;
+        }
+        return this.resolveFromForgeUserClientProvider();
+    }
+
+    private String resolveFromCurrentForgeUserProvider() {
         if (this.currentForgeUserProvider == null) {
             return null;
         }
@@ -75,6 +87,30 @@ public class ForgeServiceAuthClientHttpRequestInterceptor implements ClientHttpR
             final Method subjectMethod = forgeUser.getClass().getMethod(SUBJECT_METHOD);
             final Object subject = subjectMethod.invoke(forgeUser);
             if (subject instanceof String value && StringUtils.hasText(value)) {
+                return value;
+            }
+        } catch (final Exception ignored) {
+            return null;
+        }
+        return null;
+    }
+
+    private String resolveFromForgeUserClientProvider() {
+        if (this.forgeUserClientProvider == null) {
+            return null;
+        }
+        final Object forgeUserClient = this.forgeUserClientProvider.getIfAvailable();
+        if (forgeUserClient == null) {
+            return null;
+        }
+        try {
+            final Method userIdMethod = forgeUserClient.getClass().getMethod(USER_ID_METHOD);
+            final Object userId = userIdMethod.invoke(forgeUserClient);
+            if (userId == null) {
+                return null;
+            }
+            final String value = String.valueOf(userId);
+            if (StringUtils.hasText(value)) {
                 return value;
             }
         } catch (final Exception ignored) {
